@@ -16,6 +16,9 @@ pipenv run python seed.py
 pipenv run python app.py
 ```
 
+Run `pipenv run python seed.py` again at any time to clear and repopulate the
+workout data; it preserves the migration-managed database schema.
+
 The development server listens on `http://localhost:5555`. The SQLite database
 is stored at `Server/instance/app.db`.
 
@@ -63,3 +66,37 @@ Schema migrations are managed with Flask-Migrate.
 many-to-many relationships through `WorkoutExercise`; create entries through
 the join model or the add-exercise API so their required training metrics are
 provided.
+
+To inspect the seeded relationships and check that model validations reject
+invalid data, open the Flask shell:
+
+```sh
+cd Server
+pipenv run flask --app app shell
+```
+
+```python
+from models import Exercise, Workout, WorkoutExercise
+
+workout = Workout.query.filter_by(name="Full body starter").one()
+exercise = Exercise.query.filter_by(name="Jumping jacks").one()
+assert len(workout.workout_exercises) == 2
+assert exercise in workout.exercises
+assert workout in exercise.workouts
+assert all(entry.workout is workout for entry in workout.workout_exercises)
+assert all(entry.exercise in entry.workout.exercises for entry in exercise.workout_exercises)
+
+try:
+    Workout(name="   ")
+except ValueError:
+    print("Blank workout name rejected")
+else:
+    raise AssertionError("Blank workout name was accepted")
+
+try:
+    WorkoutExercise(sets=0)
+except ValueError:
+    print("Non-positive sets rejected")
+else:
+    raise AssertionError("Non-positive sets were accepted")
+```
