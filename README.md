@@ -65,8 +65,11 @@ metrics, required entry metrics, and one entry per exercise per workout.
 Equivalent input checks are applied by the models and Marshmallow schemas.
 `ExerciseSchema`, `WorkoutSchema`, and `WorkoutExerciseSchema` provide
 validated deserialization for create requests and serialization for API
-responses. Workout responses include each join entry's exercise IDs, metrics,
-and nested exercise details. Schema migrations are managed with Flask-Migrate.
+responses. They reject blank or overlong names, overlong descriptions and
+notes, non-positive or non-integer IDs and metrics, and workout entries without
+at least one metric. Workout responses include each join entry's exercise IDs,
+metrics, and nested exercise details. Schema migrations are managed with
+Flask-Migrate.
 
 `Workout` and `Exercise` expose read-only `exercises` and `workouts`
 many-to-many relationships through `WorkoutExercise`; create entries through

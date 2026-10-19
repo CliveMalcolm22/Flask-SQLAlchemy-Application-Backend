@@ -24,8 +24,8 @@ class ExerciseSchema(Schema):
 
 class WorkoutExerciseSchema(Schema):
     id = fields.Integer(dump_only=True)
-    workout_id = StrictInteger(required=True)
-    exercise_id = StrictInteger(required=True)
+    workout_id = StrictInteger(required=True, validate=validate.Range(min=1))
+    exercise_id = StrictInteger(required=True, validate=validate.Range(min=1))
     sets = StrictInteger(
         allow_none=True, load_default=None, validate=validate.Range(min=1)
     )
