@@ -22,6 +22,12 @@ workout data; it preserves the migration-managed database schema.
 The development server listens on `http://localhost:5555`. The SQLite database
 is stored at `Server/instance/app.db`.
 
+Run the endpoint serialization and validation tests from `Server/`:
+
+```sh
+../.venv/bin/python -m unittest discover -s tests -v
+```
+
 ## API
 
 All request and response bodies use JSON. Names are required and cannot be
