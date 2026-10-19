@@ -58,3 +58,8 @@ The database enforces nonblank names, unique exercise names, positive entry
 metrics, required entry metrics, and one entry per exercise per workout.
 Equivalent input checks are applied by the models and Marshmallow schemas.
 Schema migrations are managed with Flask-Migrate.
+
+`Workout` and `Exercise` expose read-only `exercises` and `workouts`
+many-to-many relationships through `WorkoutExercise`; create entries through
+the join model or the add-exercise API so their required training metrics are
+provided.

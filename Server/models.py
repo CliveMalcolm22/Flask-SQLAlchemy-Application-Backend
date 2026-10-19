@@ -31,6 +31,11 @@ class Exercise(db.Model):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    workouts = db.relationship(
+        "Workout",
+        secondary="workout_exercises",
+        viewonly=True,
+    )
 
     @validates("name")
     def validate_name(self, _key, value):
@@ -61,6 +66,11 @@ class Workout(db.Model):
         back_populates="workout",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+    exercises = db.relationship(
+        "Exercise",
+        secondary="workout_exercises",
+        viewonly=True,
     )
 
     @validates("name")
