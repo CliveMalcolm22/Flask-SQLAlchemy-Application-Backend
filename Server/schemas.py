@@ -2,6 +2,8 @@ from marshmallow import Schema, fields, validate, validates_schema, ValidationEr
 
 
 class StrictInteger(fields.Integer):
+    """Require JSON integers instead of Marshmallow's coercible integer inputs."""
+
     def _deserialize(self, value, attr, data, **kwargs):
         if type(value) is not int:
             raise ValidationError("Not a valid integer.")

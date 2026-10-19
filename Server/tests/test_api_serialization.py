@@ -1,6 +1,7 @@
 import os
 import unittest
 
+# Set this before importing the app so tests cannot modify the application database.
 os.environ["WORKOUT_DATABASE_URI"] = "sqlite://"
 
 from app import app

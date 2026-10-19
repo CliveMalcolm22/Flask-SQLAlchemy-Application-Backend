@@ -1,118 +1,108 @@
 # Workout Tracking API
 
-A Flask and SQLAlchemy API for managing workouts, reusable exercises, and the
-sets, reps, or duration assigned to an exercise in a workout.
+## Project description
 
-## Setup
+A Flask REST API for personal trainers to create and manage workouts and
+reusable exercises. Workouts contain exercise entries with sets, reps, and/or
+duration. Exercises can be reused in multiple workouts, and each entry keeps
+its own training metrics.
 
-Install the packages in the `Pipfile`, then from `Server/` initialize and seed
-the database:
+The API uses Flask-SQLAlchemy for persistence, Flask-Migrate for database
+migrations, and Marshmallow for request validation and JSON serialization.
+
+## Installation
+
+From the repository root, install the dependencies:
 
 ```sh
 pipenv install
-cd Server
-pipenv run flask --app app db upgrade
-pipenv run python seed.py
-pipenv run python app.py
 ```
 
-Run `pipenv run python seed.py` again at any time to clear and repopulate the
-workout data; it preserves the migration-managed database schema.
-
-The development server listens on `http://localhost:5555`. The SQLite database
-is stored at `Server/instance/app.db`. Set `WORKOUT_DATABASE_URI` to use a
-different SQLAlchemy database URI.
-
-Run the endpoint serialization and validation tests from `Server/`:
+Initialize or update the database schema from the `Server/` directory:
 
 ```sh
-../.venv/bin/python -m unittest discover -s tests -v
+cd Server
+pipenv run flask --app app db upgrade
 ```
 
-## API
+Populate the database with sample workouts and exercises:
 
-All request and response bodies use JSON. Names are required and cannot be
-blank. Exercise descriptions and workout notes are optional.
+```sh
+pipenv run python seed.py
+```
 
-| Method | Path | Behavior |
+Running the seed command again clears and repopulates the application data; it
+preserves the migration-managed schema. By default, SQLite stores the database
+at `Server/instance/app.db`. Set `WORKOUT_DATABASE_URI` to use a different
+SQLAlchemy database URI.
+
+## Run the API
+
+From `Server/`, start the Flask development server:
+
+```sh
+pipenv run flask --app app run --port 5555
+```
+
+The API is then available at `http://localhost:5555`. Alternatively,
+`pipenv run python app.py` starts the same application.
+
+## Endpoints
+
+All endpoints use JSON request and response bodies unless a successful delete
+returns `204 No Content`. `<workout_id>` and `<exercise_id>` are integer
+resource IDs. Names are required and cannot be blank. Exercise descriptions
+and workout notes are optional.
+
+| Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/workouts` | List workouts with their exercise entries |
-| `POST` | `/workouts` | Create a workout (`name`, optional `notes`) |
-| `GET` | `/workouts/<id>` | View one workout and its exercise entries |
-| `DELETE` | `/workouts/<id>` | Delete a workout and its entries |
-| `GET` | `/exercises` | List reusable exercises |
-| `POST` | `/exercises` | Create an exercise (`name`, optional `description`) |
-| `GET` | `/exercises/<id>` | View one exercise |
-| `DELETE` | `/exercises/<id>` | Delete an exercise and its workout entries |
-| `POST` | `/workout_exercises` | Add an exercise with a `workout_id` |
-| `POST` | `/workouts/<id>/exercises` | Add an exercise to the selected workout |
-| `POST` | `/workouts/<workout_id>/exercises/<exercise_id>/workout_exercises` | Add the selected exercise with training metrics |
+| `GET` | `/workouts` | List all workouts, including their exercise entries, metrics, and nested exercise details. |
+| `GET` | `/workouts/<workout_id>` | Retrieve one workout and its exercise entries. |
+| `POST` | `/workouts` | Create a workout with a `name` and optional `notes`. |
+| `DELETE` | `/workouts/<workout_id>` | Delete a workout and its associated exercise entries. |
+| `GET` | `/exercises` | List reusable exercises. |
+| `GET` | `/exercises/<exercise_id>` | Retrieve one exercise. |
+| `POST` | `/exercises` | Create an exercise with a `name` and optional `description`. |
+| `DELETE` | `/exercises/<exercise_id>` | Delete an exercise and its associated workout entries. |
+| `POST` | `/workout_exercises` | Add an exercise entry; body includes `workout_id`, `exercise_id`, and at least one training metric. |
+| `POST` | `/workouts/<workout_id>/exercises` | Add an exercise to a workout; body includes `exercise_id` and at least one training metric. |
+| `POST` | `/workouts/<workout_id>/exercises/<exercise_id>/workout_exercises` | Add the URL-selected exercise to the URL-selected workout; body includes training metrics only. |
 
-An exercise entry requires `exercise_id` and at least one positive integer
-metric: `sets`, `reps`, or `duration` (duration is measured in seconds). For
-example:
+Workout and exercise creation examples:
 
 ```json
 {
-  "exercise_id": 1,
+  "name": "Full body strength",
+  "notes": "Beginner session"
+}
+```
+
+```json
+{
+  "name": "Dumbbell squat",
+  "description": "A squat performed while holding dumbbells."
+}
+```
+
+A workout-exercise entry must have at least one positive integer metric:
+`sets`, `reps`, or `duration` (in seconds). For example, the nested endpoint
+accepts:
+
+```json
+{
   "sets": 3,
   "reps": 10
 }
 ```
 
-The `/workout_exercises` endpoint takes the same body plus a `workout_id`.
-The nested `/workouts/<workout_id>/exercises/<exercise_id>/workout_exercises`
-endpoint takes the metrics only; the workout and exercise IDs come from its URL.
-Repeated exercise entries in one workout are rejected. Invalid payloads return
-`400`, missing resources return `404`, and duplicate resource/entry conflicts
-return `409`.
+Invalid request data returns `400`, missing workouts or exercises return `404`,
+and duplicate exercises or entries return `409`. Deleting a workout or exercise
+also removes its associated workout-exercise entries.
 
-The database enforces nonblank names, unique exercise names, positive entry
-metrics, required entry metrics, and one entry per exercise per workout.
-Equivalent input checks are applied by the models and Marshmallow schemas.
-`ExerciseSchema`, `WorkoutSchema`, and `WorkoutExerciseSchema` provide
-validated deserialization for create requests and serialization for API
-responses. They reject blank or overlong names, overlong descriptions and
-notes, non-positive or non-integer IDs and metrics, and workout entries without
-at least one metric. Workout responses include each join entry's exercise IDs,
-metrics, and nested exercise details. Schema migrations are managed with
-Flask-Migrate.
+## Tests
 
-`Workout` and `Exercise` expose read-only `exercises` and `workouts`
-many-to-many relationships through `WorkoutExercise`; create entries through
-the join model or the add-exercise API so their required training metrics are
-provided.
-
-To inspect the seeded relationships and check that model validations reject
-invalid data, open the Flask shell:
+Run the API tests from `Server/`:
 
 ```sh
-cd Server
-pipenv run flask --app app shell
-```
-
-```python
-from models import Exercise, Workout, WorkoutExercise
-
-workout = Workout.query.filter_by(name="Full body starter").one()
-exercise = Exercise.query.filter_by(name="Jumping jacks").one()
-assert len(workout.workout_exercises) == 2
-assert exercise in workout.exercises
-assert workout in exercise.workouts
-assert all(entry.workout is workout for entry in workout.workout_exercises)
-assert all(entry.exercise in entry.workout.exercises for entry in exercise.workout_exercises)
-
-try:
-    Workout(name="   ")
-except ValueError:
-    print("Blank workout name rejected")
-else:
-    raise AssertionError("Blank workout name was accepted")
-
-try:
-    WorkoutExercise(sets=0)
-except ValueError:
-    print("Non-positive sets rejected")
-else:
-    raise AssertionError("Non-positive sets were accepted")
+../.venv/bin/python -m unittest discover -s tests -v
 ```

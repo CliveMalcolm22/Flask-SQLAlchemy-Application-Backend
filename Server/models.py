@@ -8,6 +8,7 @@ db = SQLAlchemy()
 
 @event.listens_for(Engine, "connect")
 def enable_sqlite_foreign_keys(connection, _connection_record):
+    """Enable SQLite's opt-in foreign-key enforcement for each connection."""
     if connection.__class__.__module__.startswith("sqlite3"):
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
@@ -34,6 +35,7 @@ class Exercise(db.Model):
     workouts = db.relationship(
         "Workout",
         secondary="workout_exercises",
+        # Join entries carry required metrics, so create them through WorkoutExercise.
         viewonly=True,
     )
 
@@ -70,6 +72,7 @@ class Workout(db.Model):
     exercises = db.relationship(
         "Exercise",
         secondary="workout_exercises",
+        # Join entries carry required metrics, so create them through WorkoutExercise.
         viewonly=True,
     )
 

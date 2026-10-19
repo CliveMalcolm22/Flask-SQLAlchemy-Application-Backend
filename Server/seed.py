@@ -5,6 +5,7 @@ from models import Exercise, Workout, WorkoutExercise, db
 
 
 def seed_database():
+    """Replace seeded application data without changing the migrated schema."""
     db.session.query(WorkoutExercise).delete()
     db.session.query(Workout).delete()
     db.session.query(Exercise).delete()
