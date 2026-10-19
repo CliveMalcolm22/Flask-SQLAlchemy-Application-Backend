@@ -1,4 +1,7 @@
+import os
 import unittest
+
+os.environ["WORKOUT_DATABASE_URI"] = "sqlite://"
 
 from app import app
 from models import WorkoutExercise, db
@@ -7,11 +10,7 @@ from models import WorkoutExercise, db
 class ApiSerializationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.original_database_uri = app.config["SQLALCHEMY_DATABASE_URI"]
-        app.config.update(
-            SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
-            TESTING=True,
-        )
+        app.config["TESTING"] = True
         with app.app_context():
             db.create_all()
 
@@ -21,7 +20,6 @@ class ApiSerializationTests(unittest.TestCase):
             db.session.remove()
             db.drop_all()
             db.engine.dispose()
-        app.config["SQLALCHEMY_DATABASE_URI"] = cls.original_database_uri
 
     def setUp(self):
         with app.app_context():

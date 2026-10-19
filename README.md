@@ -20,7 +20,8 @@ Run `pipenv run python seed.py` again at any time to clear and repopulate the
 workout data; it preserves the migration-managed database schema.
 
 The development server listens on `http://localhost:5555`. The SQLite database
-is stored at `Server/instance/app.db`.
+is stored at `Server/instance/app.db`. Set `WORKOUT_DATABASE_URI` to use a
+different SQLAlchemy database URI.
 
 Run the endpoint serialization and validation tests from `Server/`:
 
