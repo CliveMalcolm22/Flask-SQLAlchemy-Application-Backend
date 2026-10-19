@@ -39,6 +39,7 @@ blank. Exercise descriptions and workout notes are optional.
 | `DELETE` | `/exercises/<id>` | Delete an exercise and its workout entries |
 | `POST` | `/workout_exercises` | Add an exercise with a `workout_id` |
 | `POST` | `/workouts/<id>/exercises` | Add an exercise to the selected workout |
+| `POST` | `/workouts/<workout_id>/exercises/<exercise_id>/workout_exercises` | Add the selected exercise with training metrics |
 
 An exercise entry requires `exercise_id` and at least one positive integer
 metric: `sets`, `reps`, or `duration` (duration is measured in seconds). For
@@ -53,6 +54,8 @@ example:
 ```
 
 The `/workout_exercises` endpoint takes the same body plus a `workout_id`.
+The nested `/workouts/<workout_id>/exercises/<exercise_id>/workout_exercises`
+endpoint takes the metrics only; the workout and exercise IDs come from its URL.
 Repeated exercise entries in one workout are rejected. Invalid payloads return
 `400`, missing resources return `404`, and duplicate resource/entry conflicts
 return `409`.

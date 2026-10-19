@@ -155,5 +155,16 @@ def create_nested_workout_exercise(workout_id):
     return add_exercise_to_workout(workout_id, payload)
 
 
+@app.post(
+    "/workouts/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises"
+)
+def create_nested_workout_exercise_entry(workout_id, exercise_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"errors": {"_schema": ["Request body must be a JSON object."]}}), 400
+    payload["exercise_id"] = exercise_id
+    return add_exercise_to_workout(workout_id, payload)
+
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
